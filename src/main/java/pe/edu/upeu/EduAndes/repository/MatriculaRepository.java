@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import pe.edu.upeu.EduAndes.dto.reportes.MatriculadosPorCursoDTO;
+import pe.edu.upeu.EduAndes.dto.reportes.RecaudacionPorCarreraDTO;
 import pe.edu.upeu.EduAndes.entity.Matricula;
 import pe.edu.upeu.EduAndes.enums.EstadoMatricula;
 
@@ -41,4 +42,21 @@ public interface MatriculaRepository extends JpaRepository<Matricula, Long> {
     List<MatriculadosPorCursoDTO> obtenerReporteMatriculadosPorCurso(
             @Param("periodo") String periodo,
             @Param("carreraId") Long carreraId);
+
+    @Query("""
+        select new pe.edu.upeu.EduAndes.dto.reportes.RecaudacionPorCarreraDTO(
+            car.nombre,
+            count(distinct m.id),
+            sum(m.totalCreditos),
+            sum(m.montoTotal)
+        )
+        from Matricula m
+        join m.estudiante e
+        join e.carrera car
+        where m.estado = pe.edu.upeu.EduAndes.enums.EstadoMatricula.REGISTRADA
+          and (:periodo is null or m.periodo = :periodo)
+        group by car.nombre
+        order by car.nombre asc
+        """)
+    List<RecaudacionPorCarreraDTO> obtenerReporteRecaudacionPorCarrera(@Param("periodo") String periodo);
 }
